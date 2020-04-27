@@ -6,7 +6,6 @@ const auth = require('../middleware/auth')
 
 
 router.post('/users', async (req,res) => {
-    // const token = jwt.sign({ token })
     let user = new User(req.body)
     try {
         const token = jwt.sign({_id: user._id}, 'mysupersecret', {expiresIn: '7 days'})
@@ -46,10 +45,24 @@ router.post('/users/logout', auth, async (req,res) => {
 
 router.get('/users/me', auth, async (req, res) => {
     try {
-        console.log(req.user)
         res.send(req.user)
     } catch (e) {
         res.status(500).send(e)
+    }
+})
+
+router.patch('/users/me/update', auth, async (req, res) => {
+    const updates = Object.keys(req.body)
+    const user = req.user
+
+    updates.forEach(update => user[update] = req.body[update])
+
+    try {
+        await user.save()
+        res.send(user)
+    } catch (e) {
+        console.log(e)
+        res.status(400).send(e)
     }
 })
 
