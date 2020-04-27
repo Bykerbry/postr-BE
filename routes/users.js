@@ -1,6 +1,5 @@
 const express = require('express')
 const jwt = require('jsonwebtoken')
-const bcrypt = require('bcrypt')
 const router = new express.Router()
 const User = require('../models/user')
 const auth = require('../middleware/auth')
@@ -22,14 +21,13 @@ router.post('/users', async (req,res) => {
 
 router.post('/users/login', async (req,res) => {
     try {
-        const user = await User.findOne({email: req.body.email})
+        const user = await User.validateLogin(req.body.email, req.body.password)
         const token = jwt.sign({_id: user._id}, 'mysupersecret', {expiresIn: '7 days'})
         user.tokens = [...user.tokens, token]
         await user.save()
         res.send({user, token})
-
     } catch (e) {
-        res.status(400).send(e)
+        res.status(400).send({error: e.message})
     }
 })
 
