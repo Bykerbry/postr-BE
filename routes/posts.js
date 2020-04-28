@@ -45,10 +45,8 @@ router.patch('/posts/update/:id', auth, async (req, res) => {
     const isValid = updates.every(update => allowedUpdates.includes(update))
 
     try {
-        const post = await Post.findById(req.params.id)
-        if(!post) {
-            throw new Error('Post not found')
-        }
+        const post = await Post.findById(req.params.id).orFail(new Error('Post not found'))
+
         if(!isValid) {
             throw new Error('Invalid update request')
         }
@@ -71,23 +69,28 @@ router.patch('/posts/update/:id', auth, async (req, res) => {
     }
 })
 
-router.post('/posts/comment/:id', auth, async (req, res) => {
+router.delete('/posts/delete/:id', auth, async (req, res) => {
     try {
-        const post = await Post.findById(req.params.id)
-        post.comments = [...post.comments, {
-            comment: req.body.comment,
-            creator: {
-                _id: req.user._id,
-                name: req.user.fullName
-            },
-            createdAt: new Date()
-        }]
-        await post.save()
-        res.send(post)
+        console.log(req.params.id);
+        const post = await Post.findById(req.params.id).orFail(new Error('Post not found'))
+        console.log(post);
+        if (req.user._id.equals(post.creator._id)) {
+            await Post.deleteOne({_id: req.params.id})
+            res.send()
+        } else {
+            throw new Error('Unauthorized')
+        }
     } catch (e) {
-        console.log(e);
-        res.status(400).send({error: e.message})
+        if (e.message === 'Post not found') {
+            res.status(404).send({error: e.message})
+        } else if (e.message === 'Unauthorized') {
+            res.status(401).send({error: e.message})
+        } else {
+            res.status(500).send({error: e.message})
+        }
     }
 })
+
+
 
 module.exports = router

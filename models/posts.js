@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
+const CommentSchema = require('./comments')
 
 const PostSchema = new mongoose.Schema({
     title: {
@@ -36,45 +37,15 @@ const PostSchema = new mongoose.Schema({
             default: 0
         }
     },
-    comments: [{
-        comment: {
-            type: String,
-            required: true
-        },
-        creator: {
-            _id: {
-                type: mongoose.Schema.Types.ObjectId,
-                required: true
-            },
-            name: {
-                type: String,
-                required: true    
-            }
-        },
-        createdAt: { 
-            type: Date,
-            required: true
-        },
-        lastUpdatedAt: {
-            type: Date
-        },
-        votes: {
-            up: {
-                type: Number,
-                default: 0
-            },
-            down: {
-                type: Number,
-                default: 0
-            }
-        }
-    }]
+    comments: [CommentSchema]
 })
 
 
 PostSchema.virtual('netVotes').get(function () {
     return this.votes.up - this.votes.down
 })
+
+
 
 const Post = mongoose.model('Post', PostSchema)
 
