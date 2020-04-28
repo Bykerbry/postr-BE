@@ -2,18 +2,29 @@ const mongoose = require('mongoose')
 
 const PostSchema = new mongoose.Schema({
     title: {
-        type: String
+        type: String,
+        maxlength: 100
     },
     body: {
-        type: String
+        type: String,
+        maxlength: 1000
     },
-    createdOn: {
+    createdAt: {
+        type: Date,
+        required: true
+    },
+    lastUpdatedAt: {
         type: Date
     },
     creator: {
-        type: String,
-        required: true,
-        default: 'Anonymous'
+        _id: {
+            type: mongoose.Schema.Types.ObjectId,
+            required: true
+        },
+        name: {
+            type: String,
+            required: true    
+        }
     } 
 })
 
