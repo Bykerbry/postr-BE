@@ -6,7 +6,7 @@ const auth = require('../middleware/auth')
 router.post('/posts', auth, async (req, res) => {
     req.body.creator = {
         _id: req.user._id,
-        name: `${req.user.firstName} ${req.user.lastName}`
+        name: req.user.fullName
     }
     req.body.createdAt = new Date()
 
@@ -48,7 +48,7 @@ router.patch('/posts/update/:id', auth, async (req, res) => {
         const post = await Post.findById(req.params.id).orFail(new Error('Post not found'))
 
         if(!isValid) {
-            throw new Error('Invalid update request')
+            throw new Error('Invalid request')
         }
         if (post.creator._id.equals(req.user._id)) {
             updates.forEach(update => post[update] = req.body[update])
@@ -56,24 +56,27 @@ router.patch('/posts/update/:id', auth, async (req, res) => {
             await post.save()
             res.send(post)
         } else {
-            throw new Error('Unauthorized update')
+            throw new Error('Unauthorized')
         }
     } catch (e) {
-        if(e.message === 'Unauthorized update') {
-            res.status(401).send({error: e.message})
-        } else if (e.message === 'Post not found') {
-            res.status(404).send({error: e.message})
-        } else {
-            res.status(400).send({error: e.message})
+        const err = {error: e.message}
+        switch(e.message) {
+            case 'Invalid request':
+                res.status(400).send(err)
+            case 'Unauthorized':
+                res.status(401).send(err)
+            case 'Post not found':
+                res.status(404).send(err)
+            default:
+                res.status(500).send(err)
         }
     }
 })
 
 router.delete('/posts/delete/:id', auth, async (req, res) => {
     try {
-        console.log(req.params.id);
         const post = await Post.findById(req.params.id).orFail(new Error('Post not found'))
-        console.log(post);
+
         if (req.user._id.equals(post.creator._id)) {
             await Post.deleteOne({_id: req.params.id})
             res.send()
@@ -81,12 +84,50 @@ router.delete('/posts/delete/:id', auth, async (req, res) => {
             throw new Error('Unauthorized')
         }
     } catch (e) {
-        if (e.message === 'Post not found') {
-            res.status(404).send({error: e.message})
-        } else if (e.message === 'Unauthorized') {
-            res.status(401).send({error: e.message})
-        } else {
-            res.status(500).send({error: e.message})
+        const err = {error: e.message}
+        switch(e.message) {
+            case 'Unauthorized':
+                res.status(401).send(err)
+            case 'Post not found':
+                res.status(404).send(err)
+            default:
+                res.status(500).send(err)
+        }
+    }
+})
+
+router.patch('/posts/:vote/:id', auth, async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.id).orFail(new Error('Post not found'))
+
+        if (post.creator._id.equals(req.user._id)) {
+            throw new Error('Unauthorized')
+        }
+
+        switch(req.params.vote) {
+            case 'up': 
+                post.votes.up++
+                break;
+            case 'down':
+                post.votes.down++
+                break;
+            default:
+                throw new Error ('Invalid request')
+        }
+
+        await post.save()
+        res.status(201).send(post)
+    } catch (e) {
+        const err = {error: e.message}
+        switch(e.message) {
+            case 'Invalid request':
+                res.status(400).send(err)
+            case 'Unauthorized':
+                res.status(401).send(err)
+            case 'Post not found':
+                res.status(404).send(err)
+            default:
+                res.status(500).send(err)
         }
     }
 })

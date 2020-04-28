@@ -32,16 +32,56 @@ router.patch('/posts/comments/:id', auth, async (req, res) => {
 
         const index = post.comments.findIndex(comment => comment._id.equals(req.params.id))
         post.comments[index].comment = req.body.comment
+        post.comments[index].lastUpdatedAt = new Date()
         await post.save()
         res.send(post)
 
     } catch (e) {
-        if(e.message === 'Post not found') {
-            res.status(404).send({error: e.message})
-        } else if(e.message === 'Unauthorized') {
-            res.status(401).send({error: e.message})
-        } else {
-            res.status(500).send({error: e.message})
+        const err = {error: e.message}
+        switch(e.message) {
+            case 'Unauthorized':
+                res.status(401).send(err)
+            case 'Post not found':
+                res.status(404).send(err)
+            default:
+                res.status(500).send(err)
+        }
+    }
+})
+
+router.patch('/posts/comments/:vote/:id', auth, async (req, res) => {
+    try {
+        const post = await Post.findOne({"comments._id": req.params.id}).orFail(new Error('Post not found'))
+
+        if (post.creator._id.equals(req.user._id)) {
+            throw new Error('Unauthorized')
+        }
+
+        const index = post.comments.findIndex(comment => comment._id.equals(req.params.id))
+        switch(req.params.vote) {
+            case 'up': 
+                post.comments[index].votes.up++
+                break;
+            case 'down':
+                post.comments[index].votes.down++
+                break;
+            default:
+                throw new Error ('Invalid request')
+        }
+
+        await post.save()
+        res.status(201).send(post)
+    } catch (e) {
+        const err = {error: e.message}
+        switch(e.message) {
+            case 'Invalid request':
+                res.status(400).send(err)
+            case 'Unauthorized':
+                res.status(401).send(err)
+            case 'Post not found':
+                res.status(404).send(err)
+            default:
+                res.status(500).send(err)
         }
     }
 })
@@ -60,12 +100,14 @@ router.delete('/posts/comments/:id', auth, async (req, res) =>{
         res.send(post)
 
     } catch (e) {
-        if(e.message === 'Post not found') {
-            res.status(404).send({error: e.message})
-        } else if(e.message === 'Unauthorized') {
-            res.status(401).send({error: e.message})
-        } else {
-            res.status(500).send({error: e.message})
+        const err = {error: e.message}
+        switch(e.message) {
+            case 'Unauthorized':
+                res.status(401).send(err)
+            case 'Post not found':
+                res.status(404).send(err)
+            default:
+                res.status(500).send(err)
         }
     }
 })
