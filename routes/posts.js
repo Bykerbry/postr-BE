@@ -71,4 +71,23 @@ router.patch('/posts/update/:id', auth, async (req, res) => {
     }
 })
 
+router.post('/posts/comment/:id', auth, async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.id)
+        post.comments = [...post.comments, {
+            comment: req.body.comment,
+            creator: {
+                _id: req.user._id,
+                name: req.user.fullName
+            },
+            createdAt: new Date()
+        }]
+        await post.save()
+        res.send(post)
+    } catch (e) {
+        console.log(e);
+        res.status(400).send({error: e.message})
+    }
+})
+
 module.exports = router
