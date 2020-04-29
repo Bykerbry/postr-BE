@@ -52,17 +52,20 @@ router.get('/users/me', auth, async (req, res) => {
 })
 
 router.patch('/users/me/update', auth, async (req, res) => {
+    const allowedUpdates =['firstName', 'lastName', 'email', 'password']
     const updates = Object.keys(req.body)
-    const user = req.user
-
-    updates.forEach(update => user[update] = req.body[update])
+    const isValid = updates.every(update => allowedUpdates.includes(update))
 
     try {
+        if (!isValid) {
+            throw new Error('Invalid request')
+        }
+        const user = req.user
+        updates.forEach(update => user[update] = req.body[update])    
         await user.save()
         res.send(user)
     } catch (e) {
-        console.log(e)
-        res.status(400).send(e)
+        res.status(400).send({error: e.message})
     }
 })
 
