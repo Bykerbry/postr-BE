@@ -56,6 +56,17 @@ UserSchema.pre('save', async function(next) {
     next()
 })
 
+UserSchema.methods.toJSON = function () {
+    const userObj = this.toObject()
+
+    delete userObj.password
+    delete userObj.tokens
+
+    return userObj
+}
+
+
+
 UserSchema.statics.validateLogin = async (email, password) => {
     const user = await User.findOne({email})
     if(!user) {

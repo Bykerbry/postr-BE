@@ -19,6 +19,7 @@ router.post('/users', async (req,res) => {
 })
 
 router.post('/users/login', async (req,res) => {
+    console.log(req.body)
     try {
         const user = await User.validateLogin(req.body.email, req.body.password)
         const token = jwt.sign({_id: user._id}, 'mysupersecret', {expiresIn: '7 days'})
