@@ -1,8 +1,20 @@
 const express = require('express')
 const jwt = require('jsonwebtoken')
+const multer = require('multer')
 const router = new express.Router()
 const User = require('../models/users')
 const auth = require('../middleware/auth')
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, './uploads')
+    },
+    filename: function(req, file, cb) {
+        cb(null, new Date().toISOString() + file.originalname)
+    }
+})
+
+const upload = multer({ storage })
 
 
 router.post('/users', async (req,res) => {
@@ -67,6 +79,20 @@ router.patch('/users/me/update', auth, async (req, res) => {
         res.send(user)
     } catch (e) {
         res.status(400).send({error: e.message})
+    }
+})
+
+router.post('/users/me/profile-picture', auth, upload.single('profilePicture'), async (req, res) => {
+    if (req.file.mimetype === 'image/jpeg' || req.file.mimetype === 'image/png' || req.file.mimetype === 'image/jpg') {
+        req.user.profilePicture = req.file.path
+        console.log(req.user)
+        try {
+            await req.user.save()
+            res.send(req.user)
+        } catch (error) {
+            console.log(error)
+            res.send(400).send({error: e.message})
+        }
     }
 })
 

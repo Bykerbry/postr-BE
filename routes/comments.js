@@ -12,7 +12,7 @@ router.post('/posts/comments/:id', auth, async (req, res) => {
                 _id: req.user._id,
                 name: req.user.fullName
             },
-            createdAt: new Date()
+            createdAt: Date.now()
         }]
         await post.save()
         res.status(201).send(post)
@@ -32,7 +32,7 @@ router.patch('/posts/comments/:id', auth, async (req, res) => {
 
         const index = post.comments.findIndex(comment => comment._id.equals(req.params.id))
         post.comments[index].comment = req.body.comment
-        post.comments[index].lastUpdatedAt = new Date()
+        post.comments[index].lastUpdatedAt = Date.now()
         await post.save()
         res.send(post)
 

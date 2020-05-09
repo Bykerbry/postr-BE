@@ -8,9 +8,10 @@ router.post('/posts', auth, async (req, res) => {
         _id: req.user._id,
         name: req.user.fullName
     }
-    req.body.createdAt = new Date()
-
+    req.body.createdAt = Date.now()
+    console.log(req.body)
     const post = new Post(req.body)
+    console.log(post)
 
     try {
         await post.save()
@@ -52,7 +53,7 @@ router.patch('/posts/update/:id', auth, async (req, res) => {
         }
         if (post.creator._id.equals(req.user._id)) {
             updates.forEach(update => post[update] = req.body[update])
-            post.lastUpdatedAt = new Date()
+            post.lastUpdatedAt = Date.now()
             await post.save()
             res.send(post)
         } else {
