@@ -14,7 +14,18 @@ const storage = multer.diskStorage({
     }
 })
 
-const upload = multer({ storage })
+const upload = multer({ 
+    storage, 
+    limits: { 
+        fileSize: 1024 * 1024 * 5
+    },
+    fileFilter(req,file,cb) {
+        if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+            return cb(new Error('File must be of type jpg, jpeg, or png'))
+        }
+        cb(null, true)
+    }
+})
 
 
 router.post('/users', async (req,res) => {
@@ -83,16 +94,14 @@ router.patch('/users/me/update', auth, async (req, res) => {
 })
 
 router.post('/users/me/profile-picture', auth, upload.single('profilePicture'), async (req, res) => {
-    if (req.file.mimetype === 'image/jpeg' || req.file.mimetype === 'image/png' || req.file.mimetype === 'image/jpg') {
-        req.user.profilePicture = req.file.path
-        console.log(req.user)
-        try {
-            await req.user.save()
-            res.send(req.user)
-        } catch (error) {
-            console.log(error)
-            res.send(400).send({error: e.message})
-        }
+    req.user.profilePicture = req.file.filename
+    console.log(req.user)
+    try {
+        await req.user.save()
+        res.send(req.user)
+    } catch (error) {
+        console.log(error)
+        res.send(400).send({error: e.message})
     }
 })
 

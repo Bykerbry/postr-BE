@@ -6,7 +6,8 @@ const auth = require('../middleware/auth')
 router.post('/posts', auth, async (req, res) => {
     req.body.creator = {
         _id: req.user._id,
-        name: req.user.fullName
+        name: req.user.fullName,
+        profilePicture: req.user.profilePicture
     }
     req.body.createdAt = Date.now()
     console.log(req.body)
