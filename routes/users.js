@@ -92,16 +92,14 @@ router.patch('/users/me/update', auth, async (req, res) => {
         res.status(400).send({error: e.message})
     }
 })
-
 router.post('/users/me/profile-picture', auth, upload.single('profilePicture'), async (req, res) => {
-    req.user.profilePicture = req.file.filename
-    console.log(req.user)
     try {
+        req.user.profilePicture = req.file.filename
         await req.user.save()
         res.send(req.user)
-    } catch (error) {
-        console.log(error)
-        res.send(400).send({error: e.message})
+    } catch (e) {
+        console.log(e)
+        res.status(400).send({error: e.message})
     }
 })
 
