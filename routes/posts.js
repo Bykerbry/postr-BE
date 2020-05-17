@@ -34,7 +34,6 @@ router.get('/posts/me', auth, async (req,res) => {
 router.get('/posts/all', auth, async (req, res) => {
     try {
         const posts = await Post.find({})
-        console.log(posts)
         res.send(posts)
     } catch (e) {
         console.log(e.message)
@@ -99,7 +98,7 @@ router.delete('/posts/delete/:id', auth, async (req, res) => {
     }
 })
 
-router.patch('/posts/:vote/:id', auth, async (req, res) => {
+router.patch('/posts/cast/:vote/:id', auth, async (req, res) => {
     try {
         const post = await Post.findById(req.params.id).orFail(new Error('Post not found'))
 
@@ -121,7 +120,60 @@ router.patch('/posts/:vote/:id', auth, async (req, res) => {
                     _id: req.user._id,
                     name: req.user.fullName
                 }]
+                break;
+            default:
+                throw new Error ('Invalid request')
+        }
 
+        await post.save()
+        res.status(201).send(post)
+    } catch (e) {
+        const err = {error: e.message}
+        switch(e.message) {
+            case 'Invalid request':
+                res.status(400).send(err)
+            case 'Unauthorized':
+                res.status(401).send(err)
+            case 'Post not found':
+                res.status(404).send(err)
+            default:
+                res.status(500).send(err)
+        }
+    }
+})
+
+router.patch('/posts/remove/:vote/:id', auth, async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.id).orFail(new Error('Post not found'))
+
+        const findVoterIndex = (vote) => {
+            return vote.voters.findIndex(voter => voter._id.equals(req.user._id))
+        }
+
+        const removeVoter = (vote, voterIndex) => {
+            return [
+                ...vote.voters.slice(0, voterIndex),
+                ...vote.voters.slice(voterIndex + 1)
+            ]
+        }
+
+        switch(req.params.vote) {
+            case 'up':
+                const { up } = post.votes
+                const upVoterIndex = findVoterIndex(up)
+                if (upVoterIndex >= 0) {
+                    up.voters = removeVoter(up, upVoterIndex)
+                    up.count--
+                }
+                break;
+            case 'down':
+                const { down } = post.votes
+                const downVoterIndex = findVoterIndex(down)
+                console.log(downVoterIndex)
+                if (downVoterIndex >= 0) {
+                    down.voters = removeVoter(down, downVoterIndex)
+                    down.count--
+                }
                 break;
             default:
                 throw new Error ('Invalid request')
