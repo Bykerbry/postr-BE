@@ -10,7 +10,6 @@ router.post('/posts', auth, async (req, res) => {
         profilePicture: req.user.profilePicture
     }
     req.body.createdAt = Date.now()
-    console.log(req.body)
     const post = new Post(req.body)
     console.log(post)
 
@@ -35,8 +34,10 @@ router.get('/posts/me', auth, async (req,res) => {
 router.get('/posts/all', auth, async (req, res) => {
     try {
         const posts = await Post.find({})
+        console.log(posts)
         res.send(posts)
     } catch (e) {
+        console.log(e.message)
         res.status(500).send(e)
     }
 })
@@ -108,10 +109,19 @@ router.patch('/posts/:vote/:id', auth, async (req, res) => {
 
         switch(req.params.vote) {
             case 'up': 
-                post.votes.up++
+                post.votes.up.count++
+                post.votes.up.voters = [...post.votes.up.voters, {
+                    _id: req.user._id,
+                    name: req.user.fullName
+                }]
                 break;
             case 'down':
-                post.votes.down++
+                post.votes.down.count++
+                post.votes.down.voters = [...post.votes.down.voters, {
+                    _id: req.user._id,
+                    name: req.user.fullName
+                }]
+
                 break;
             default:
                 throw new Error ('Invalid request')
