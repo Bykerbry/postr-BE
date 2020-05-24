@@ -13,6 +13,9 @@ const CommentSchema = new mongoose.Schema({
         name: {
             type: String,
             required: true    
+        }, 
+        profilePicture: {
+            type: String
         }
     },
     createdAt: { 
@@ -24,14 +27,38 @@ const CommentSchema = new mongoose.Schema({
     },
     votes: {
         up: {
-            type: Number,
-            default: 0
+            count: {
+                type: Number,
+                default: 0    
+            },
+            voters: [{
+                _id: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    required: true
+                },
+                name: {
+                    type: String,
+                    required: true
+                }
+            }]
         },
         down: {
-            type: Number,
-            default: 0
+            count: {
+                type: Number,
+                default: 0    
+            },
+            voters: [{
+                _id: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    required: true
+                },
+                name: {
+                    type: String,
+                    required: true
+                }
+            }]
         }
-    }
+    },
 })
 
 
